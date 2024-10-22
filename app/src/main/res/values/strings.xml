@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name" translatable="false">NoteBox</string>
+    <string name="add_note">Add note</string>
+    <string name="text_note">Text note</string>
+    <string name="title">Title</string>
+    <string name="all_notes">All notes</string>
+    <string name="cancel">Cancel select</string>
+    <string name="options">Options</string>
+    <string name="select_all">Select all</string>
+    <string name="selected">Selected: %1$d</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>

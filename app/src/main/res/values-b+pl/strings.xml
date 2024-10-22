@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add_note">Dodaj notatke</string>
+    <string name="text_note">Notatka</string>
+    <string name="title">Tytuł</string>
+    <string name="all_notes">Wszystkie notatki</string>
+    <string name="cancel">Wyłącz zaznaczanie</string>
+    <string name="options">Opcje</string>
+    <string name="select_all">Zaznacz wszystko</string>
+    <string name="selected">Zaznaczono: %1$d</string>
+</resources>
