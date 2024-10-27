@@ -13,9 +13,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import io.realm.Realm;
 
@@ -28,8 +29,8 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
     private Context context;
     private List<NoteModel> notes;
     private ActivityResultLauncher<Intent> launcher;
-    private Map<Integer, Long> selectedNotes = new HashMap<>();
-    private Boolean isSelecting = false;
+    private Set<Integer> selectedNotes = new HashSet<>();
+    public Boolean isSelecting = false;
     private OnNoteSelectedListener listener;
     private Realm realm;
 
@@ -59,15 +60,15 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
 
         if (isSelecting) {
             holder.checkBox.setVisibility(View.VISIBLE);
-            holder.checkBox.setChecked(selectedNotes.containsKey(position));
+            holder.checkBox.setChecked(selectedNotes.contains(position));
         } else {
             holder.checkBox.setVisibility(View.GONE);
-            holder.checkBox.setChecked(!selectedNotes.containsKey(position));
+            holder.checkBox.setChecked(!selectedNotes.contains(position));
         }
 
         holder.main.setOnLongClickListener(v -> {
             holder.checkBox.setChecked(true);
-            selectedNotes.put(position, note.getMilliseconds());
+            selectedNotes.add(position);
             isSelecting = true;
             notifyDataSetChanged();
 
@@ -75,16 +76,16 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
             return true;
         });
 
-        holder.main.setOnClickListener(v -> {
-            if (isSelecting){
-                if (!selectedNotes.containsKey(position)){
+        View.OnClickListener pressedListener = v -> {
+            if (isSelecting) {
+                if (!selectedNotes.contains(position)) {
                     holder.checkBox.setChecked(true);
-                    selectedNotes.put(position, note.getMilliseconds());
+                    selectedNotes.add(position);
 
                     listener.onNoteSelected(true, selectedNotes.size());
                 } else {
                     holder.checkBox.setChecked(false);
-                    selectedNotes.remove(position, note.getMilliseconds());
+                    selectedNotes.remove(position);
 
                     listener.onNoteSelected(true, selectedNotes.size());
                 }
@@ -97,7 +98,10 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 launcher.launch(intent);
             }
-        });
+        };
+
+        holder.main.setOnClickListener(pressedListener);
+        holder.checkBox.setOnClickListener(pressedListener);
     }
 
     public void stopSelecting(){
@@ -108,7 +112,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
 
     public void selectAll() {
         for (int i = 0; i < notes.size(); i++) {
-            selectedNotes.put(i, notes.get(i).getMilliseconds());
+            selectedNotes.add(i);
         }
         notifyDataSetChanged();
         listener.onNoteSelected(true, selectedNotes.size());
@@ -121,18 +125,28 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
     }
 
     public void deleteSelected() {
-        for (NoteModel notes : notes){
-            if (selectedNotes.containsValue(notes.getMilliseconds())){
-                realm.beginTransaction();
-                notes.deleteFromRealm();
-                realm.commitTransaction();
-            }
+        realm.beginTransaction();
+        for (int index : selectedNotes){
+            NoteModel note = notes.get(index);
+            note.deleteFromRealm();
         }
+        realm.commitTransaction();
+
         selectedNotes.clear();
         notifyDataSetChanged();
         listener.onNoteSelected(false, 0);
-
         isSelecting = false;
+    }
+
+    public void updateSelection(int start, int end, boolean isSelected){
+        for (int i = start; i < end; i++) {
+            if (isSelected) {
+                selectedNotes.add(i);
+            } else {
+                selectedNotes.remove(i);
+            }
+            notifyItemChanged(i);
+        }
     }
 
     @Override

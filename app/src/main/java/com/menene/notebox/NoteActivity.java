@@ -1,7 +1,9 @@
 package com.menene.notebox;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.inputmethod.InputMethodManager;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,7 +15,6 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.textfield.TextInputEditText;
 
 import io.realm.Realm;
-import io.realm.RealmConfiguration;
 
 public class NoteActivity extends AppCompatActivity {
     Toolbar toolbar;
@@ -44,12 +45,21 @@ public class NoteActivity extends AppCompatActivity {
         titleEditText = findViewById(R.id.title);
         contentEditText = findViewById(R.id.content);
 
+        contentEditText.requestFocus();
+
+        contentEditText.postDelayed(() -> {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(contentEditText, InputMethodManager.SHOW_IMPLICIT);
+        }, 200);
+
         Intent intent = getIntent();
         isEditing = intent.getBooleanExtra("isEditing", false);
 
         if (isEditing) {
             titleEditText.setText(intent.getStringExtra("title"));
             contentEditText.setText(intent.getStringExtra("content"));
+
+            contentEditText.setSelection(contentEditText.getText().length());
         }
 
         realm = Utility.getRealmInstance(getApplicationContext());

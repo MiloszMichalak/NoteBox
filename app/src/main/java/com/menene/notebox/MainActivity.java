@@ -3,7 +3,6 @@ package com.menene.notebox;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -12,10 +11,12 @@ import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -24,9 +25,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.michaelflisar.dragselectrecyclerview.DragSelectTouchListener;
+import com.michaelflisar.dragselectrecyclerview.DragSelectionProcessor;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import io.realm.Realm;
 import io.realm.RealmResults;
+import io.realm.Sort;
 
 public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNoteSelectedListener {
     RecyclerView recyclerView;
@@ -66,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNot
             return insets;
         });
 
+
         addNoteBtn = findViewById(R.id.addNoteBtn);
 
         amountOfNotes = findViewById(R.id.amountOfNotes);
@@ -76,14 +84,19 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNot
         addNoteBtn.setOnClickListener(v -> resultLauncher.launch(new Intent(this, NoteActivity.class)));
 
         realm = Utility.getRealmInstance(getApplicationContext());
-        notes = realm.where(NoteModel.class).findAll();
+
+        notes = realm.where(NoteModel.class)
+                .sort("milliseconds", Sort.ASCENDING)
+                .findAll();
         amountOfNotes.setText(String.valueOf(notes.size()));
 
         recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new GridLayoutManager(getApplicationContext(), 3));
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
 
         adapter = new NoteAdapter(getApplicationContext(), notes, resultLauncher, this);
         recyclerView.setAdapter(adapter);
+
+        // todo drag i zaznaczanie elementow
 
         header = findViewById(R.id.toolbarLayout);
 
@@ -112,20 +125,22 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNot
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                adapter.stopSelecting();
-                onNoteSelected(false, 0);
+                if (adapter.isSelecting) {
+                    adapter.stopSelecting();
+                    onNoteSelected(false, 0);
 
-                Utility.resetUi(amountOfNotes, allNotesText, allNotes, addNoteBtn, bottomNavigationView, getString(R.string.all_notes), notes.size());
+                    Utility.resetUi(amountOfNotes, allNotesText, allNotes, addNoteBtn, bottomNavigationView, getString(R.string.all_notes), notes.size());
+                } else {
+                    finish();
+                }
             }
         });
 
-        selectAll.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked){
-                if (selectAll.isChecked()) {
-                    adapter.selectAll();
-                } else {
-                    adapter.deselectAll();
-                }
+        selectAll.setOnClickListener(v -> {
+            if (selectAll.isChecked()) {
+                adapter.selectAll();
+            } else {
+                adapter.deselectAll();
             }
         });
     }

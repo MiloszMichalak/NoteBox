@@ -2,5 +2,5 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:icon="@drawable/rubbish_bin"
         android:id="@+id/deleteBtn"
-        android:title=""/>
+        android:title="" />
 </menu>
