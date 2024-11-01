@@ -13,7 +13,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,25 +25,27 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
         void onNoteSelected(boolean isSelecting, int amount);
     }
 
-    private Context context;
+    private final Context context;
     private List<NoteModel> notes;
-    private ActivityResultLauncher<Intent> launcher;
+    private final ActivityResultLauncher<Intent> launcher;
     private Set<Integer> selectedNotes = new HashSet<>();
     public Boolean isSelecting = false;
-    private OnNoteSelectedListener listener;
+    private final OnNoteSelectedListener listener;
     private Realm realm;
+    private int layoutId;
 
-    public NoteAdapter(Context context, List<NoteModel> notes, ActivityResultLauncher<Intent> launcher, OnNoteSelectedListener listener) {
+    public NoteAdapter(Context context, List<NoteModel> notes, ActivityResultLauncher<Intent> launcher, OnNoteSelectedListener listener, int layoutId) {
         this.context = context;
         this.notes = notes;
         this.launcher = launcher;
         this.listener = listener;
+        this.layoutId = layoutId;
     }
 
     @NonNull
     @Override
     public NoteAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.note_item, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(layoutId, parent, false);
         return new ViewHolder(view);
     }
 
@@ -138,15 +139,13 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
         isSelecting = false;
     }
 
-    public void updateSelection(int start, int end, boolean isSelected){
-        for (int i = start; i < end; i++) {
-            if (isSelected) {
-                selectedNotes.add(i);
-            } else {
-                selectedNotes.remove(i);
-            }
-            notifyItemChanged(i);
-        }
+    public void updateElements(List<NoteModel> notes) {
+        this.notes = notes;
+        notifyDataSetChanged();
+    }
+
+    public void setLayoutId(int layoutId) {
+        this.layoutId = layoutId;
     }
 
     @Override

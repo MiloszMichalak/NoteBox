@@ -3,6 +3,7 @@ package com.menene.notebox;
 
 import android.content.Context;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -35,12 +36,13 @@ public static String getFormattedDate(long milliseconds, String format) {
     }
 
     public static void resetUi(TextView amountOfNotes, TextView allNotesText, TextView allNotes, FloatingActionButton addNoteBtn, BottomNavigationView bottomNavigationView,
-                               String notesText, int amount) {
+                               String notesText, int amount, ImageView optionsBtn) {
         allNotesText.setText(notesText);
         amountOfNotes.setVisibility(View.VISIBLE);
         amountOfNotes.setText(String.valueOf(amount));
         allNotes.setVisibility(View.VISIBLE);
         addNoteBtn.show();
         bottomNavigationView.setVisibility(View.INVISIBLE);
+        optionsBtn.setVisibility(View.VISIBLE);
     }
 }

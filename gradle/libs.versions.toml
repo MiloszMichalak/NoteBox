@@ -1,17 +1,15 @@
 [versions]
 agp = "8.8.0-alpha08"
-dragselectrecyclerview = "0.3"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
 material = "1.12.0"
 activity = "1.9.3"
-constraintlayout = "2.1.4"
+constraintlayout = "2.2.0"
 realmGradlePlugin = "10.19.0"
 
 [libraries]
-dragselectrecyclerview = { module = "com.github.MFlisar:DragSelectRecyclerView", version.ref = "dragselectrecyclerview" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

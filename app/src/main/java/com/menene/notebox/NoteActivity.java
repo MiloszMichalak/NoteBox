@@ -27,7 +27,7 @@ public class NoteActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_create_note);
+        setContentView(R.layout.activity_note);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -58,7 +58,6 @@ public class NoteActivity extends AppCompatActivity {
         if (isEditing) {
             titleEditText.setText(intent.getStringExtra("title"));
             contentEditText.setText(intent.getStringExtra("content"));
-
             contentEditText.setSelection(contentEditText.getText().length());
         }
 

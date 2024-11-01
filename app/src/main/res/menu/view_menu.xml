@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="@string/grid_small"
+        android:id="@+id/grid_small"/>
+    <item android:title="@string/grid_medium"
+        android:id="@+id/grid_medium"/>
+    <item android:title="@string/list"
+        android:id="@+id/list"/>
+</menu>

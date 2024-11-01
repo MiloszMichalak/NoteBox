@@ -8,4 +8,11 @@
     <string name="options">Options</string>
     <string name="select_all">Select all</string>
     <string name="selected">%1d Selected</string>
+    <string name="edit">Edit</string>
+    <string name="view">View</string>
+    <string name="grid_small">Grid (small)</string>
+    <string name="grid_medium">Grid (medium)</string>
+    <string name="list">List</string>
+    <string name="createDate">Created date</string>
+    <string name="sort_options">Sort options</string>
 </resources>
