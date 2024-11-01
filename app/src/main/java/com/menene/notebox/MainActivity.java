@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNot
     private ImageView optionsBtn, sortingArrow;
     private PopupMenu popupMenu, sortMenu;
     private String sortOrder;
+    private String sortType;
     private TextView sortOptions;
     private SharedPreferences.Editor editor;
 
@@ -94,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNot
 
         Realm realm = Utility.getRealmInstance(getApplicationContext());
 
-        String sortType = prefs.getString(SORT_TYPE, "title");
+        sortType = prefs.getString(SORT_TYPE, "title");
         sortOrder = prefs.getString(SORT_ORDER, "asc");
         sortOptions.setText(sortType.equals("title")
                 ? getString(R.string.title) : getString(R.string.createDate));
@@ -213,6 +214,7 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNot
         sortingArrow.setTag(sortOrder);
 
         sortingArrow.setOnClickListener(v -> {
+            sortType = prefs.getString(SORT_TYPE, "title");
             if (sortingArrow.getTag().equals("asc")){
                 sortingArrow.setImageResource(R.drawable.down_arrow);
                 sortingArrow.setTag("desc");

@@ -75,7 +75,9 @@ public class NoteActivity extends AppCompatActivity {
                 if (!isEditing) {
                     AddNote();
                 } else {
-                    EditNote(intent.getLongExtra("milliseconds", 0));
+                    if (!content.equals(intent.getStringExtra("content")) || !title.equals(intent.getStringExtra("title"))) {
+                        EditNote(intent.getLongExtra("milliseconds", 0));
+                    }
                 }
                 setResult(RESULT_OK);
             }

@@ -89,35 +89,35 @@
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="20dp"
+            android:layout_gravity="end"
             android:orientation="horizontal"
-            android:layout_gravity="end">
+            android:alpha="0.7">
 
             <TextView
                 android:id="@+id/sort"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="end" />
+                android:layout_gravity="center" />
 
             <View
                 android:layout_width="1dp"
-                android:layout_height="20dp"
-                android:background="@color/black"
+                android:layout_height="match_parent"
                 android:layout_gravity="end"
-                android:layout_marginStart="5dp"
-                android:layout_marginEnd="5dp"/>
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:background="@color/colorAccent" />
 
             <ImageView
+                android:id="@+id/sorting_order"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
+                android:contentDescription="@string/sort_options"
                 android:src="@drawable/down_arrow"
-                android:id="@+id/sorting_order"
-                android:contentDescription="@string/sort_options"/>
+                android:layout_marginEnd="10dp"/>
 
         </androidx.appcompat.widget.LinearLayoutCompat>
-
-
 
     </com.google.android.material.appbar.AppBarLayout>
 
