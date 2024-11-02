@@ -128,9 +128,36 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
             if (isSelecting) {
                 checkBox.setVisibility(View.VISIBLE);
                 checkBox.setChecked(selectedNotes.contains(position));
+
+                animateCheckBox();
+
+                if (layoutId == R.layout.note_item_list){
+                    checkBox.post(() -> {
+                        title.animate().translationX(checkBox.getWidth()).setDuration(300).start();
+                        date.animate().translationX(checkBox.getWidth()).setDuration(300).start();
+                    });
+                }
             } else {
                 checkBox.setVisibility(View.GONE);
-                checkBox.setChecked(!selectedNotes.contains(position));
+                checkBox.setChecked(false);
+
+                date.animate().translationX(0).setDuration(300).start();
+                title.animate().translationX(0).setDuration(300).start();
+            }
+        }
+
+        private void animateCheckBox() {
+            if (!selectedNotes.isEmpty() && !(selectedNotes.size() == notes.size())) {
+                checkBox.setScaleX(0);
+                checkBox.setScaleY(0);
+                checkBox.setAlpha(0);
+
+                checkBox.animate()
+                        .scaleX(1)
+                        .scaleY(1)
+                        .alpha(1)
+                        .setDuration(300)
+                        .start();
             }
         }
 
