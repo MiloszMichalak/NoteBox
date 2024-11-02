@@ -28,11 +28,11 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
     private final Context context;
     private List<NoteModel> notes;
     private final ActivityResultLauncher<Intent> launcher;
-    private Set<Integer> selectedNotes = new HashSet<>();
-    public Boolean isSelecting = false;
+    private final Set<Integer> selectedNotes = new HashSet<>();
     private final OnNoteSelectedListener listener;
-    private Realm realm;
+    private final Realm realm;
     private int layoutId;
+    public Boolean isSelecting = false;
 
     public NoteAdapter(Context context, List<NoteModel> notes, ActivityResultLauncher<Intent> launcher, OnNoteSelectedListener listener, int layoutId) {
         this.context = context;
@@ -40,72 +40,25 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
         this.launcher = launcher;
         this.listener = listener;
         this.layoutId = layoutId;
+        this.realm = Utility.getRealmInstance(context);
     }
 
     @NonNull
     @Override
-    public NoteAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(layoutId, parent, false);
         return new ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull NoteAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         NoteModel note = notes.get(position);
 
-        holder.title.setText(note.getTitle());
-        holder.content.setText(note.getContent());
-        holder.date.setText(Utility.getFormattedDate(note.getMilliseconds(), "dd MMM"));
-
-        realm = Utility.getRealmInstance(context);
-
-        if (isSelecting) {
-            holder.checkBox.setVisibility(View.VISIBLE);
-            holder.checkBox.setChecked(selectedNotes.contains(position));
-        } else {
-            holder.checkBox.setVisibility(View.GONE);
-            holder.checkBox.setChecked(!selectedNotes.contains(position));
-        }
-
-        holder.main.setOnLongClickListener(v -> {
-            holder.checkBox.setChecked(true);
-            selectedNotes.add(position);
-            isSelecting = true;
-            notifyDataSetChanged();
-
-            listener.onNoteSelected(true, selectedNotes.size());
-            return true;
-        });
-
-        View.OnClickListener pressedListener = v -> {
-            if (isSelecting) {
-                if (!selectedNotes.contains(position)) {
-                    holder.checkBox.setChecked(true);
-                    selectedNotes.add(position);
-
-                    listener.onNoteSelected(true, selectedNotes.size());
-                } else {
-                    holder.checkBox.setChecked(false);
-                    selectedNotes.remove(position);
-
-                    listener.onNoteSelected(true, selectedNotes.size());
-                }
-            } else {
-                Intent intent = new Intent(context, NoteActivity.class);
-                intent.putExtra("title", note.getTitle());
-                intent.putExtra("content", note.getContent());
-                intent.putExtra("milliseconds", note.getMilliseconds());
-                intent.putExtra("isEditing", true);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                launcher.launch(intent);
-            }
-        };
-
-        holder.main.setOnClickListener(pressedListener);
-        holder.checkBox.setOnClickListener(pressedListener);
+        holder.bind(note, position);
+        holder.setListeners();
     }
 
-    public void stopSelecting(){
+    public void stopSelecting() {
         isSelecting = false;
         selectedNotes.clear();
         notifyDataSetChanged();
@@ -127,7 +80,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
 
     public void deleteSelected() {
         realm.beginTransaction();
-        for (int index : selectedNotes){
+        for (int index : selectedNotes) {
             NoteModel note = notes.get(index);
             note.deleteFromRealm();
         }
@@ -153,10 +106,11 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
         return notes.size();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder {
         TextView title, content, date;
         AppCompatCheckBox checkBox;
         RelativeLayout main;
+
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.title);
@@ -164,6 +118,68 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
             date = itemView.findViewById(R.id.date);
             checkBox = itemView.findViewById(R.id.checkBox);
             main = itemView.findViewById(R.id.main);
+        }
+
+        public void bind(NoteModel note, int position) {
+            title.setText(note.getTitle());
+            content.setText(note.getContent());
+            date.setText(Utility.getFormattedDate(note.getMilliseconds(), "dd MMM"));
+
+            if (isSelecting) {
+                checkBox.setVisibility(View.VISIBLE);
+                checkBox.setChecked(selectedNotes.contains(position));
+            } else {
+                checkBox.setVisibility(View.GONE);
+                checkBox.setChecked(!selectedNotes.contains(position));
+            }
+        }
+
+        public void setListeners() {
+            main.setOnLongClickListener(v -> {
+                toggleSelection();
+                return true;
+            });
+
+            View.OnClickListener pressedListener = v -> {
+                if (isSelecting) {
+                    selectNote();
+                } else {
+                    EditNote();
+                }
+            };
+
+            main.setOnClickListener(pressedListener);
+            checkBox.setOnClickListener(pressedListener);
+        }
+
+        private void selectNote() {
+            if (!selectedNotes.contains(getAdapterPosition())) {
+                checkBox.setChecked(true);
+                selectedNotes.add(getAdapterPosition());
+            } else {
+                checkBox.setChecked(false);
+                selectedNotes.remove(getAdapterPosition());
+            }
+            listener.onNoteSelected(true, selectedNotes.size());
+        }
+
+        private void EditNote() {
+            Intent intent = new Intent(context, NoteActivity.class);
+            intent.putExtra("title", notes.get(getAdapterPosition()).getTitle());
+            intent.putExtra("content", notes.get(getAdapterPosition()).getContent());
+            intent.putExtra("milliseconds", notes.get(getAdapterPosition()).getMilliseconds());
+            intent.putExtra("isEditing", true);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            launcher.launch(intent);
+        }
+
+        private void toggleSelection() {
+            checkBox.setChecked(true);
+            selectedNotes.add(getAdapterPosition());
+            isSelecting = true;
+            notifyDataSetChanged();
+
+            listener.onNoteSelected(true, selectedNotes.size());
         }
     }
 }

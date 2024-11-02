@@ -22,10 +22,52 @@ public class NoteActivity extends AppCompatActivity {
     TextInputEditText titleEditText, contentEditText;
     String title, content;
     Boolean isEditing;
+    Intent intent;
+
+    private void setupToolbar(){
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
+        toolbar.setNavigationOnClickListener(v -> {
+            content = contentEditText.getText().toString();
+            title = titleEditText.getText().toString();
+
+            handleNoteSaving();
+            finish();
+        });
+    }
+
+    private void handleNoteSaving() {
+        if (!content.isEmpty() || !title.isEmpty()) {
+            if (title.isEmpty()) {
+                title = getString(R.string.text_note) + " " + Utility.getFormattedDate(System.currentTimeMillis(), "dd/MM");
+            }
+
+            if (!isEditing || !content.equals(intent.getStringExtra("content")) || !title.equals(intent.getStringExtra("title"))) {
+                if (!isEditing){
+                    AddNote();
+                } else {
+                    EditNote(intent.getLongExtra("milliseconds", 0));
+                }
+            }
+            setResult(RESULT_OK);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        realm = Utility.getRealmInstance(this);
+
+        setupUi();
+        checkEditMode();
+        setupToolbar();
+        openKeyboard();
+    }
+
+    private void setupUi(){
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_note);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -35,24 +77,12 @@ public class NoteActivity extends AppCompatActivity {
         });
 
         toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setDisplayShowHomeEnabled(true);
-        }
-
         titleEditText = findViewById(R.id.title);
         contentEditText = findViewById(R.id.content);
+    }
 
-        contentEditText.requestFocus();
-
-        contentEditText.postDelayed(() -> {
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.showSoftInput(contentEditText, InputMethodManager.SHOW_IMPLICIT);
-        }, 200);
-
-        Intent intent = getIntent();
+    private void checkEditMode(){
+        intent = getIntent();
         isEditing = intent.getBooleanExtra("isEditing", false);
 
         if (isEditing) {
@@ -60,29 +90,14 @@ public class NoteActivity extends AppCompatActivity {
             contentEditText.setText(intent.getStringExtra("content"));
             contentEditText.setSelection(contentEditText.getText().length());
         }
+    }
 
-        realm = Utility.getRealmInstance(getApplicationContext());
-
-        toolbar.setNavigationOnClickListener(v -> {
-            content = contentEditText.getText().toString();
-            title = titleEditText.getText().toString();
-
-            if (!content.isEmpty() || !title.isEmpty()) {
-                if (title.isEmpty()) {
-                    title = getString(R.string.text_note) + " " + Utility.getFormattedDate(System.currentTimeMillis(), "dd/MM");
-                }
-
-                if (!isEditing) {
-                    AddNote();
-                } else {
-                    if (!content.equals(intent.getStringExtra("content")) || !title.equals(intent.getStringExtra("title"))) {
-                        EditNote(intent.getLongExtra("milliseconds", 0));
-                    }
-                }
-                setResult(RESULT_OK);
-            }
-            finish();
-        });
+    private void openKeyboard(){
+        contentEditText.requestFocus();
+        contentEditText.postDelayed(() -> {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(contentEditText, InputMethodManager.SHOW_IMPLICIT);
+        }, 200);
     }
 
     private void AddNote() {

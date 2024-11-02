@@ -13,6 +13,6 @@
     <string name="grid_small">Mała siatka</string>
     <string name="grid_medium">Średnia siatka</string>
     <string name="list">Lista</string>
-    <string name="createDate">Data utworzenia</string>
+    <string name="create_date">Data utworzenia</string>
     <string name="sort_options">Opcje sortowania</string>
 </resources>

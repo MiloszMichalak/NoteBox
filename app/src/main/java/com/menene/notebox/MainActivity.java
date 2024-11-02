@@ -33,19 +33,18 @@ import io.realm.Sort;
 public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNoteSelectedListener {
     private RecyclerView recyclerView;
     private FloatingActionButton addNoteBtn;
-    private RealmResults<NoteModel> notes;
-    private TextView amountOfNotes, allNotes;
+    private TextView amountOfNotes, allNotes, allNotesText, sortOptions;
     private LinearLayout headerTitle;
     private AppCompatCheckBox selectAll;
     private AppCompatTextView selectAllText;
-    private TextView allNotesText;
     private BottomNavigationView bottomNavigationView;
-    private NoteAdapter adapter;
     private ImageView optionsBtn, sortingArrow;
     private PopupMenu popupMenu, sortMenu;
-    private String sortOrder;
-    private String sortType;
-    private TextView sortOptions;
+
+    private RealmResults<NoteModel> notes;
+    private NoteAdapter adapter;
+    private String sortOrder, sortType;
+    SharedPreferences prefs;
     private SharedPreferences.Editor editor;
 
     private static final String PREFS_NAME = "prefs";
@@ -69,178 +68,27 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNot
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        int columns = prefs.getInt(GRID_LAYOUT_PREF, 3);
-
-        addNoteBtn = findViewById(R.id.addNoteBtn);
-
-        amountOfNotes = findViewById(R.id.amountOfNotes);
-        allNotes = findViewById(R.id.allNotes);
-
-        headerTitle = findViewById(R.id.headerTitle);
-
-        sortOptions = findViewById(R.id.sort);
-
-        sortingArrow = findViewById(R.id.sorting_order);
-
-        addNoteBtn.setOnClickListener(v -> resultLauncher.launch(new Intent(this, NoteActivity.class)));
-
-        Realm realm = Utility.getRealmInstance(getApplicationContext());
-
-        sortType = prefs.getString(SORT_TYPE, "title");
-        sortOrder = prefs.getString(SORT_ORDER, "asc");
-        sortOptions.setText(sortType.equals("title")
-                ? getString(R.string.title) : getString(R.string.createDate));
-        sortingArrow.setImageResource(sortOrder.equals("asc") ? R.drawable.up_arrow : R.drawable.down_arrow);
-
-        notes = realm.where(NoteModel.class)
-                .sort(sortType, sortOrder.equals("asc") ? Sort.ASCENDING : Sort.DESCENDING)
-                .findAll();
-        amountOfNotes.setText(String.valueOf(notes.size()));
-
-        recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new GridLayoutManager(this, columns));
-
-        if (columns == 1){
-            adapter = new NoteAdapter(getApplicationContext(), notes, resultLauncher, this, R.layout.note_item_list);
-        } else {
-            adapter = new NoteAdapter(getApplicationContext(), notes, resultLauncher, this, R.layout.note_item);
-        }
-        recyclerView.setAdapter(adapter);
-
-        AppBarLayout header = findViewById(R.id.toolbarLayout);
-
-        selectAll = findViewById(R.id.select_all);
-        selectAllText = findViewById(R.id.select_all_text);
-        allNotesText = findViewById(R.id.all_notes_text);
-
-        bottomNavigationView = findViewById(R.id.bottom_nav);
-
-        optionsBtn = findViewById(R.id.options);
-
-        popupMenu = new PopupMenu(this, optionsBtn);
-        popupMenu.getMenuInflater().inflate(R.menu.options_menu, popupMenu.getMenu());
-
-        optionsBtn.setOnClickListener(v -> popupMenu.show());
-
-        popupMenu.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == R.id.edit) {
-                onNoteSelected(true, 0);
-                adapter.notifyDataSetChanged();
-
-                return true;
-            } else if (item.getItemId() == R.id.view) {
-               showSubMenu();
-               return true;
-            }
-            return false;
-        });
-
-        bottomNavigationView.setOnItemSelectedListener(item -> {
-            if (item.getItemId() == R.id.deleteBtn) {
-                adapter.deleteSelected();
-                return true;
-            }
-            return false;
-        });
-
-        header.addOnOffsetChangedListener((appBarLayout, verticalOffset) -> {
-            int totalScrollRange = appBarLayout.getTotalScrollRange();
-            float scrollFactor = (float) Math.abs(verticalOffset) / totalScrollRange;
-
-            headerTitle.setAlpha(0.8f - scrollFactor);
-            allNotes.setAlpha(scrollFactor);
-        });
-
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                if (adapter.isSelecting) {
-                    adapter.stopSelecting();
-                    onNoteSelected(false, 0);
-
-                    Utility.resetUi(amountOfNotes, allNotesText, allNotes, addNoteBtn, bottomNavigationView,
-                            getString(R.string.all_notes), notes.size(), optionsBtn);
-                } else {
-                    finish();
-                }
-            }
-        });
-
-        selectAll.setOnClickListener(v -> {
-            if (selectAll.isChecked()) {
-                adapter.selectAll();
-            } else {
-                adapter.deselectAll();
-            }
-        });
-
-        sortOptions = findViewById(R.id.sort);
-
-        sortMenu = new PopupMenu(this, sortOptions);
-        sortMenu.getMenuInflater().inflate(R.menu.sortmenu, sortMenu.getMenu());
-
-        sortOptions.setOnClickListener(v -> sortMenu.show());
-
-        editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
-
-        sortMenu.setOnMenuItemClickListener(item -> {
-            sortOrder = prefs.getString(SORT_ORDER, "asc");
-            Sort sort = sortOrder.equals("asc") ? Sort.ASCENDING : Sort.DESCENDING;
-
-            if (item.getItemId() == R.id.title) {
-                notes = notes.sort("title", sort);
-                editor.putString(SORT_TYPE, "title");
-                sortOptions.setText(getString(R.string.title));
-            } else if (item.getItemId() == R.id.createDate) {
-                notes = notes.sort("milliseconds", sort);
-                editor.putString(SORT_TYPE, "milliseconds");
-                sortOptions.setText(getString(R.string.createDate));
-            }
-            adapter.updateElements(notes);
-            editor.apply();
-
-            return true;
-        });
-
-        sortingArrow.setTag(sortOrder);
-
-        sortingArrow.setOnClickListener(v -> {
-            sortType = prefs.getString(SORT_TYPE, "title");
-            if (sortingArrow.getTag().equals("asc")){
-                sortingArrow.setImageResource(R.drawable.down_arrow);
-                sortingArrow.setTag("desc");
-                notes = notes.sort(sortType, Sort.DESCENDING);
-                editor.putString(SORT_ORDER, "desc");
-            } else {
-                sortingArrow.setImageResource(R.drawable.up_arrow);
-                sortingArrow.setTag("asc");
-                notes = notes.sort(sortType, Sort.ASCENDING);
-                editor.putString(SORT_ORDER, "asc");
-            }
-            editor.apply();
-            adapter.updateElements(notes);
-        });
+        setupUi();
+        initializePreferences();
+        initRealm();
+        setupRecyclerView();
+        setupPopmenu();
+        setupSortMenu();
+        setupListeners();
+        setupOnBackPressed();
+        setupHeaderAlphaAnimation();
     }
 
     private void showSubMenu() {
         PopupMenu popupMenu = new PopupMenu(this, optionsBtn);
         popupMenu.getMenuInflater().inflate(R.menu.view_menu, popupMenu.getMenu());
 
-        popupMenu.setOnMenuItemClickListener(item1 -> {
-            if (item1.getItemId() == R.id.grid_small) {
+        popupMenu.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.grid_small) {
                 setLayout(3, R.layout.note_item);
-            } else if (item1.getItemId() == R.id.grid_medium) {
+            } else if (item.getItemId() == R.id.grid_medium) {
                 setLayout(2, R.layout.note_item);
-            } else if (item1.getItemId() == R.id.list){
+            } else if (item.getItemId() == R.id.list){
                 setLayout(1, R.layout.note_item_list);
             }
             recyclerView.setAdapter(adapter);
@@ -252,10 +100,189 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNot
         popupMenu.show();
     }
 
+    private void setupUi(){
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        addNoteBtn = findViewById(R.id.addNoteBtn);
+        amountOfNotes = findViewById(R.id.amountOfNotes);
+        allNotes = findViewById(R.id.allNotes);
+        headerTitle = findViewById(R.id.headerTitle);
+        sortOptions = findViewById(R.id.sort);
+        sortingArrow = findViewById(R.id.sorting_order);
+        recyclerView = findViewById(R.id.recyclerView);
+        selectAll = findViewById(R.id.select_all);
+        selectAllText = findViewById(R.id.select_all_text);
+        allNotesText = findViewById(R.id.all_notes_text);
+        bottomNavigationView = findViewById(R.id.bottom_nav);
+        optionsBtn = findViewById(R.id.options);
+    }
+
+    private void initializePreferences(){
+        prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        editor = prefs.edit();
+        sortType = prefs.getString(SORT_TYPE, "title");
+        sortOrder = prefs.getString(SORT_ORDER, "asc");
+    }
+
+    private void initRealm(){
+        Realm realm = Utility.getRealmInstance(getApplicationContext());
+        notes = realm.where(NoteModel.class)
+                .sort(sortType, sortOrder.equals("asc") ? Sort.ASCENDING : Sort.DESCENDING)
+                .findAll();
+        amountOfNotes.setText(String.valueOf(notes.size()));
+    }
+
+    private void setupRecyclerView(){
+        int columns = prefs.getInt(GRID_LAYOUT_PREF, 3);
+        recyclerView.setLayoutManager(new GridLayoutManager(this, columns));
+
+        int layoutId = columns == 1 ? R.layout.note_item_list : R.layout.note_item;
+        adapter = new NoteAdapter(getApplicationContext(), notes, resultLauncher, this, layoutId);
+        recyclerView.setAdapter(adapter);
+    }
+
     private void setLayout(int spanCount, int layoutId) {
         recyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
         editor.putInt(GRID_LAYOUT_PREF, spanCount);
         adapter.setLayoutId(layoutId);
+    }
+
+    private void setupPopmenu(){
+        popupMenu = new PopupMenu(this, optionsBtn);
+        popupMenu.getMenuInflater().inflate(R.menu.options_menu, popupMenu.getMenu());
+
+        popupMenu.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.edit) {
+                onNoteSelected(true, 0);
+                adapter.notifyDataSetChanged();
+                return true;
+            } else if (item.getItemId() == R.id.view) {
+                showSubMenu();
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private void changeSortingType(String type, Sort sort, int resId){
+        notes = notes.sort(type, sort);
+        editor.putString(SORT_TYPE, type);
+        sortOptions.setText(getString(resId));
+    }
+
+    private void setupSortMenu(){
+        sortMenu = new PopupMenu(this, sortOptions);
+        sortMenu.getMenuInflater().inflate(R.menu.sortmenu, sortMenu.getMenu());
+
+        sortMenu.setOnMenuItemClickListener(item -> {
+            sortOrder = prefs.getString(SORT_ORDER, "asc");
+            Sort sort = sortOrder.equals("asc") ? Sort.ASCENDING : Sort.DESCENDING;
+
+            if (item.getItemId() == R.id.title) {
+                changeSortingType("title", sort, R.string.title);
+            } else if (item.getItemId() == R.id.createDate) {
+                changeSortingType("milliseconds", sort, R.string.create_date);
+            }
+            adapter.updateElements(notes);
+            editor.apply();
+
+            return true;
+        });
+    }
+
+    private void setupListeners(){
+        addNoteBtn.setOnClickListener(v -> resultLauncher.launch(new Intent(this, NoteActivity.class)));
+
+        optionsBtn.setOnClickListener(v -> popupMenu.show());
+
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            if (item.getItemId() == R.id.deleteBtn) {
+                adapter.deleteSelected();
+                return true;
+            }
+            return false;
+        });
+
+        selectAll.setOnClickListener(v -> {
+            if (selectAll.isChecked()) {
+                adapter.selectAll();
+            } else {
+                adapter.deselectAll();
+            }
+        });
+
+        sortOptions.setOnClickListener(v -> sortMenu.show());
+
+        setupSortingArrow();
+    }
+
+    private void setupSortingArrow() {
+        sortOptions.setText(sortType.equals("title") ? R.string.title : R.string.create_date);
+        sortingArrow.setImageResource(sortOrder.equals("asc") ? R.drawable.up_arrow : R.drawable.down_arrow);
+
+        sortingArrow.setTag(sortOrder);
+
+        sortingArrow.setOnClickListener(v -> {
+            sortType = prefs.getString(SORT_TYPE, "title");
+            if (sortingArrow.getTag().equals("asc")){
+                changeSortingOrder(R.drawable.down_arrow, "desc", Sort.DESCENDING);
+            } else {
+                changeSortingOrder(R.drawable.up_arrow, "asc", Sort.ASCENDING);
+            }
+            editor.apply();
+            adapter.updateElements(notes);
+        });
+    }
+
+    private void changeSortingOrder(int resId, String orderType, Sort sortingType) {
+        sortingArrow.setImageResource(resId);
+        sortingArrow.setTag(orderType);
+        notes = notes.sort(sortType, sortingType);
+        editor.putString(SORT_ORDER, orderType);
+    }
+
+    private void setupOnBackPressed() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (adapter.isSelecting) {
+                    adapter.stopSelecting();
+                    onNoteSelected(false, 0);
+
+                    resetUi();
+                } else {
+                    finish();
+                }
+            }
+        });
+    }
+
+    private void setupHeaderAlphaAnimation() {
+        AppBarLayout header = findViewById(R.id.toolbarLayout);
+
+        header.addOnOffsetChangedListener((appBarLayout, verticalOffset) -> {
+            int totalScrollRange = appBarLayout.getTotalScrollRange();
+            float scrollFactor = (float) Math.abs(verticalOffset) / totalScrollRange;
+
+            headerTitle.setAlpha(0.8f - scrollFactor);
+            allNotes.setAlpha(scrollFactor);
+        });
+    }
+
+    public void resetUi() {
+        allNotesText.setText(getString(R.string.all_notes));
+        amountOfNotes.setVisibility(View.VISIBLE);
+        amountOfNotes.setText(String.valueOf(notes.size()));
+        allNotes.setVisibility(View.VISIBLE);
+        addNoteBtn.show();
+        bottomNavigationView.setVisibility(View.INVISIBLE);
+        optionsBtn.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -281,7 +308,7 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNot
             selectAll.setVisibility(ImageView.GONE);
             selectAllText.setVisibility(View.GONE);
 
-            Utility.resetUi(amountOfNotes, allNotesText, allNotes, addNoteBtn, bottomNavigationView, getString(R.string.all_notes), notes.size(), optionsBtn);
+            resetUi();
         }
     }
 }

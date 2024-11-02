@@ -13,6 +13,6 @@
     <string name="grid_small">Grid (small)</string>
     <string name="grid_medium">Grid (medium)</string>
     <string name="list">List</string>
-    <string name="createDate">Created date</string>
+    <string name="create_date">Created date</string>
     <string name="sort_options">Sort options</string>
 </resources>

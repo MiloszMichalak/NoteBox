@@ -2,6 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:title="@string/title"
         android:id="@+id/title"/>
-    <item android:title="@string/createDate"
+    <item android:title="@string/create_date"
         android:id="@+id/createDate"/>
 </menu>
